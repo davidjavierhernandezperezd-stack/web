@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Staff Entry</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --muted:#9aa6b2;
+      --accent:#6ee7b7;
+      --glass: rgba(255,255,255,0.04);
+      --glass-2: rgba(255,255,255,0.03);
+      --radius:12px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#071021,#0f1724);color:#e6eef6;padding:18px}
+    .container{max-width:1100px;margin:0 auto}
+    .header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7c94ff);display:grid;place-items:center;font-weight:800;color:#022}
+    .brand{font-size:20px;font-weight:800}
+    .subtitle{font-size:12px;color:var(--muted)}
+    .tabs{display:flex;gap:8px;margin-bottom:16px}
+    .tabs button{flex:1;padding:12px;border:0;border-radius:10px;background:var(--glass);color:#e6eef6;font-weight:600;cursor:pointer}
+    .tabs button.active{background:linear-gradient(90deg,var(--accent),#7c94ff);color:#012}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent),var(--card);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);margin-bottom:12px}
+    .row{display:flex;gap:8px;align-items:center}
+    input[type=text], input[type=number], input[type=password], select{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);color:inherit;flex:1}
+    button.primary{background:linear-gradient(90deg,var(--accent),#7c94ff);border:0;padding:10px 12px;border-radius:8px;color:#012;font-weight:700;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 12px;border-radius:8px;color:var(--accent);cursor:pointer}
+    .small{font-size:12px;color:var(--muted)}
+    .records{overflow:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead th{position:sticky;top:0;padding:10px;text-align:left;font-size:12px;color:var(--muted);background:rgba(0,0,0,0.4)}
+    tbody td{padding:10px;border-top:1px solid rgba(255,255,255,0.02);vertical-align:middle}
+    img.thumb{width:56px;height:40px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,255,255,0.04)}
+    .worker-card{display:flex;gap:12px;align-items:center}
+    .worker-photo{width:56px;height:56px;border-radius:8px;overflow:hidden;background:#000;display:grid;place-items:center}
+    video{width:220px;height:160px;background:#000;border-radius:8px;object-fit:cover}
+    canvas{display:none}
+    .flex-between{display:flex;justify-content:space-between;align-items:center}
+    @media(max-width:900px){ .row{flex-direction:column;align-items:stretch} video{width:100%;height:180px} }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo" aria-hidden="true">
+        <!-- Minimal logo SVG: SE -->
+        <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="8" width="84" height="84" rx="14" fill="white" opacity="0.06"/>
+          <text x="50%" y="54%" text-anchor="middle" font-size="44" font-weight="700" fill="#012">SE</text>
+        </svg>
+      </div>
+      <div>
+        <div class="brand">Staff Entry</div>
+        <div class="subtitle">Registro y administración de personal</div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div id="clock" class="small">--:--:--</div>
+        <div id="date" class="small">--</div>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button id="tabChecador" class="active">Checador</button>
+      <button id="tabRH">Recursos Humanos</button>
+    </div>
+
+    <!-- Checador -->
+    <section id="sectionChecador">
+      <div class="card">
+        <div class="row">
+          <div style="flex:1">
+            <label class="small">ID (EMP-0001)</label>
+            <input id="empId" type="text" placeholder="ID" />
+          </div>
+          <div style="flex:2">
+            <label class="small">Nombre</label>
+            <input id="empName" type="text" placeholder="Nombre (se autocompleta)" />
+          </div>
+          <div style="width:180px">
+            <label class="small">Puesto</label>
+            <input id="empJob" type="text" placeholder="Puesto" readonly />
+          </div>
+          <div style="width:140px">
+            <label class="small">Sueldo</label>
+            <input id="empSalary" type="text" placeholder="Sueldo" readonly />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <button id="btnEntrada" class="primary">Registrar Entrada</button>
+          <button id="btnSalida" class="ghost">Registrar Salida</button>
+          <button id="btnExportDay" class="ghost">Exportar día (JSON)</button>
+          <div style="margin-left:auto" id="workerInfoArea"></div>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:12px;align-items:flex-start">
+          <div>
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+          </div>
+          <div style="flex:1">
+            <div class="small">Foto de ficha (RH)</div>
+            <img id="profilePreview" class="thumb" alt="foto trabajador" src="" />
+            <div class="small" style="margin-top:8px">Foto capturada al registro:</div>
+            <img id="capturePreview" class="thumb" alt="captura" src="" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex-between">
+          <div class="title">Registros (hoy)</div>
+          <div class="small" id="stats">0 registros</div>
+        </div>
+        <div class="records" style="max-height:360px;margin-top:8px">
+          <table>
+            <thead><tr><th>Hora</th><th>ID</th><th>Nombre</th><th>Puesto</th><th>Tipo</th><th>Foto</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recursos Humanos -->
+    <section id="sectionRH" style="display:none">
+      <div class="card" id="loginCard">
+        <div class="title">Acceso Recursos Humanos</div>
+        <div class="row">
+          <input id="user" type="text" placeholder="Usuario" />
+          <input id="pass" type="password" placeholder="Contraseña" />
+          <button id="btnLogin" class="primary">Entrar</button>
+        </div>
+        <div class="small" style="margin-top:8px">Usuario demo: <strong>admin</strong> / Contraseña: <strong>1234567890</strong></div>
+      </div>
+
+      <div id="rhContent" style="display:none">
+        <div class="card">
+          <div class="title">Alta / Editar Trabajador</div>
+          <div class="row">
+            <input id="workerIdView" type="text" placeholder="(ID autogenerado)" readonly />
+            <input id="workerName" type="text" placeholder="Nombre" />
+            <input id="workerJob" type="text" placeholder="Puesto" />
+            <input id="workerSalary" type="number" placeholder="Sueldo" />
+          </div>
+          <div class="row" style="margin-top:8px">
+            <input id="filePhoto" type="file" accept="image/*" />
+            <button id="btnCaptureWorker" class="ghost">Capturar con cámara</button>
+            <button id="btnAddWorker" class="primary">Guardar trabajador</button>
+            <button id="btnClearForm" class="ghost">Limpiar</button>
+          </div>
+          <div style="margin-top:10px">
+            <div class="small">Vista previa foto</div>
+            <img id="workerPhotoPreview" class="thumb" src="" alt="preview" />
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="flex-between">
+            <div class="title">Lista de trabajadores</div>
+            <div class="small" id="workerStats">0 trabajadores</div>
+          </div>
+          <div class="records" style="max-height:360px;margin-top:8px">
+            <table>
+              <thead><tr><th>ID</th><th>Nombre</th><th>Puesto</th><th>Sueldo</th><th>Foto</th><th>Acciones</th></tr></thead>
+              <tbody id="tbodyWorkers"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="title">Archivos / Histórico</div>
+          <div class="small">Registros archivados por día (local)</div>
+          <div id="archivesList" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+<script>
+/* Keys en localStorage */
+const LS_RECORDS = 'staff_records_v1';
+const LS_WORKERS = 'staff_workers_v1';
+const LS_ARCHIVES = 'staff_archives_v1';
+
+/* Estado */
+let records = [];
+let workers = [];
+let archives = [];
+let videoStream = null;
+
+/* Utilidades fecha/hora */
+function pad(n){return String(n).padStart(2,'0');}
+function formatTime(ts){
+  const d = new Date(ts);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+function todayKey(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function formatDateVerbose(ts){ return new Date(ts).toLocaleString('es-ES'); }
+
+/* Cargar desde localStorage y separar registros anteriores a hoy (archivar) */
+function loadAll(){
+  try{records = JSON.parse(localStorage.getItem(LS_RECORDS))||[];}catch(e){records=[];}
+  try{workers = JSON.parse(localStorage.getItem(LS_WORKERS))||[];}catch(e){workers=[];}
+  try{archives = JSON.parse(localStorage.getItem(LS_ARCHIVES))||[];}catch(e){archives=[];}
+  // al cargar, mover registros de días anteriores al archivo
+  const today = todayKey();
+  const older = records.filter(r=> new Date(r.ts).toISOString().slice(0,10) !== today);
+  if(older.length){
+    const archive = {date: older[0] ? new Date(older[0].ts).toISOString().slice(0,10) : today, records: older};
+    archives.push(archive);
+    localStorage.setItem(LS_ARCHIVES, JSON.stringify(archives));
+    // dejar solo registros de hoy
+    records = records.filter(r=> new Date(r.ts).toISOString().slice(0,10) === today);
+    localStorage.setItem(LS_RECORDS, JSON.stringify(records));
+  }
+  renderAll();
+}
+
+/* Guardar */
+function saveRecords(){ localStorage.setItem(LS_RECORDS, JSON.stringify(records)); renderRecords(); }
+function saveWorkers(){ localStorage.setItem(LS_WORKERS, JSON.stringify(workers)); renderWorkers(); }
+function saveArchives(){ localStorage.setItem(LS_ARCHIVES, JSON.stringify(archives)); renderArchives(); }
+
+/* Render */
+function renderRecords(){
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML='';
+  records.slice().sort((a,b)=> b.ts - a.ts).forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${formatTime(r.ts)}</td><td>${r.id}</td><td>${r.name}</td><td>${r.job||''}</td><td>${r.type}</td><td>${r.photo?'<img src="${r.photo}" class="thumb" />':''}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('stats').textContent = `${records.length} registros`;
+}
+
+function renderWorkers(){
+  const tbody = document.getElementById('tbodyWorkers');
+  tbody.innerHTML='';
+  workers.forEach((w,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${w.id}</td><td>${w.name}</td><td>${w.job}</td><td>${w.salary}</td><td>${w.photo?'<img src="'+w.photo+'" class="thumb" />':''}</td><td><button class="ghost" onclick="editWorker(${i})">Editar</button> <button class="ghost" onclick="deleteWorker(${i})">Eliminar</button></td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('workerStats').textContent = `${workers.length} trabajadores`;
+}
+
+function renderArchives(){
+  const el = document.getElementById('archivesList');
+  el.innerHTML='';
+  if(!archives.length){ el.innerHTML = '<div class="small">No hay archivos</div>'; return; }
+  archives.slice().reverse().forEach((a,idx)=>{
+    const div = document.createElement('div');
+    div.style.display='flex'; div.style.gap='8px'; div.style.alignItems='center'; div.style.marginBottom='6px';
+    const dlabel = document.createElement('div'); dlabel.textContent = a.date; dlabel.className='small';
+    const btn = document.createElement('button'); btn.className='ghost'; btn.textContent='Descargar JSON'; btn.onclick = ()=>downloadArchive(idx);
+    const btn2 = document.createElement('button'); btn2.className='ghost'; btn2.textContent='Ver cantidad'; btn2.onclick = ()=>alert(a.records.length + ' registros archivados');
+    div.appendChild(dlabel); div.appendChild(btn); div.appendChild(btn2);
+    el.appendChild(div);
+  });
+}
+
+/* Archive download */
+function downloadArchive(idx){
+  const a = archives.slice().reverse()[idx]; // porque renderizamos invertido
+  const data = JSON.stringify(a, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a'); link.href=url; link.download = `staff_archive_${a.date}.json`; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+}
+
+/* Worker helpers */
+function generateWorkerId(){
+  const next = workers.length + 1;
+  return 'EMP-'+String(next).padStart(4,'0');
+}
+function addOrUpdateWorker(photoDataUrl){
+  const name = document.getElementById('workerName').value.trim();
+  const job = document.getElementById('workerJob').value.trim();
+  const salary = document.getElementById('workerSalary').value.trim();
+  let id = document.getElementById('workerIdView').value.trim();
+  if(!name || !job || !salary){ alert('Complete todos los campos'); return; }
+  if(!id){ id = generateWorkerId(); }
+  const payload = {id, name, job, salary, photo: photoDataUrl || document.getElementById('workerPhotoPreview').src || ''};
+  const idx = workers.findIndex(w=> w.id === id);
+  if(idx >= 0){ workers[idx] = payload; } else { workers.push(payload); }
+  saveWorkers();
+  clearWorkerForm();
+  alert('Trabajador guardado: ' + id);
+}
+
+/* Edit / delete */
+function editWorker(i){
+  const w = workers[i];
+  document.getElementById('workerIdView').value = w.id;
+  document.getElementById('workerName').value = w.name;
+  document.getElementById('workerJob').value = w.job;
+  document.getElementById('workerSalary').value = w.salary;
+  document.getElementById('workerPhotoPreview').src = w.photo || '';
+  switchTab('RH');
+  document.getElementById('rhContent').style.display='block';
+}
+function deleteWorker(i){
+  if(!confirm('Eliminar trabajador?')) return;
+  workers.splice(i,1);
+  saveWorkers();
+}
+
+/* Buscar worker por ID o nombre */
+function findWorkerByIdOrName(id,name){
+  id = (id||'').trim();
+  name = (name||'').trim().toLowerCase();
+  let w = null;
+  if(id){
+    w = workers.find(x=> x.id.toLowerCase() === id.toLowerCase());
+  }
+  if(!w && name){
+    w = workers.find(x=> x.name.toLowerCase() === name.toLowerCase());
+  }
+  return w;
+}
+
+/* Registro (entrada/salida) — requiere worker dado de alta */
+/* Toma foto en vivo y la guarda junto al registro */
+async function register(type){
+  const id = document.getElementById('empId').value.trim();
+  const name = document.getElementById('empName').value.trim();
+  const w = findWorkerByIdOrName(id,name);
+  if(!w){ alert('Trabajador no dado de alta'); return; }
+  const photo = await takePhoto();
+  const rec = { id: w.id, name: w.name, job: w.job, salary: w.salary, type, ts: Date.now(), time: formatTime(Date.now()), photo };
+  records.push(rec);
+  saveRecords();
+  document.getElementById('capturePreview').src = photo || '';
+  showWorkerInfo(w);
+}
+
+/* Mostrar info del worker en checador cuando se introduce ID */
+function autoFillByIdInput(){
+  const id = document.getElementById('empId').value.trim();
+  const w = findWorkerByIdOrName(id,'');
+  if(w){
+    document.getElementById('empName').value = w.name;
+    document.getElementById('empJob').value = w.job;
+    document.getElementById('empSalary').value = w.salary;
+    document.getElementById('profilePreview').src = w.photo || '';
+    showWorkerInfo(w);
+  } else {
+    document.getElementById('empName').value = '';
+    document.getElementById('empJob').value = '';
+    document.getElementById('empSalary').value = '';
+    document.getElementById('profilePreview').src = '';
+    document.getElementById('workerInfoArea').innerHTML = '';
+  }
+}
+
+function showWorkerInfo(w){
+  const area = document.getElementById('workerInfoArea');
+  area.innerHTML = `<div class="worker-card"><div class="worker-photo">${w.photo?'<img src="'+w.photo+'" style="width:100%;height:100%;object-fit:cover"/>':''}</div><div><div style="font-weight:700">${w.name}</div><div class="small">${w.job} — ${w.salary}</div></div></div>`;
+}
+
+/* Cámara y fotos */
+async function initCamera(){
+  try{
+    videoStream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
+    const video = document.getElementById('video');
+    video.srcObject = videoStream;
+  }catch(e){
+    console.log('No hay cámara disponible o permiso denegado', e);
+  }
+}
+function takePhoto(){
+  return new Promise((resolve)=>{
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const w = video.videoWidth || 640;
+    const h = video.videoHeight || 480;
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, w, h);
+    const data = canvas.toDataURL('image/png');
+    resolve(data);
+  });
+}
+
+/* Login RH */
+function loginRH(){
+  const u = document.getElementById('user').value.trim();
+  const p = document.getElementById('pass').value.trim();
+  if(u === 'admin' && p === '1234567890'){
+    document.getElementById('loginCard').style.display = 'none';
+    document.getElementById('rhContent').style.display = 'block';
+    renderWorkers();
+    renderArchives();
+  } else {
+    alert('Usuario o contraseña incorrectos');
+  }
+}
+
+/* Worker photo upload / capture in RH */
+document.addEventListener('change', (e)=>{
+  if(e.target && e.target.id === 'filePhoto'){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{ document.getElementById('workerPhotoPreview').src = reader.result; };
+    reader.readAsDataURL(file);
+  }
+});
+
+async function captureWorkerPhoto(){
+  const data = await takePhoto();
+  document.getElementById('workerPhotoPreview').src = data;
+}
+
+/* Events y UI wiring */
+document.getElementById('tabChecador').addEventListener('click', ()=>switchTab('Checador'));
+document.getElementById('tabRH').addEventListener('click', ()=>switchTab('RH'));
+document.getElementById('btnLogin').addEventListener('click', loginRH);
+document.getElementById('btnAddWorker').addEventListener('click', ()=>addOrUpdateWorker(document.getElementById('workerPhotoPreview').src));
+document.getElementById('btnClearForm').addEventListener('click', clearWorkerForm);
+document.getElementById('btnCaptureWorker').addEventListener('click', captureWorkerPhoto);
+document.getElementById('btnEntrada').addEventListener('click', ()=>register('Entrada'));
+document.getElementById('btnSalida').addEventListener('click', ()=>register('Salida'));
+document.getElementById('empId').addEventListener('input', autoFillByIdInput);
+document.getElementById('btnExportDay').addEventListener('click', exportTodayJSON);
+
+function clearWorkerForm(){
+  document.getElementById('workerIdView').value='';
+  document.getElementById('workerName').value='';
+  document.getElementById('workerJob').value='';
+  document.getElementById('workerSalary').value='';
+  document.getElementById('filePhoto').value='';
+  document.getElementById('workerPhotoPreview').src='';
+}
+
+/* Switch tabs */
+function switchTab(tab){
+  if(tab==='Checador'){
+    document.getElementById('sectionChecador').style.display='block';
+    document.getElementById('sectionRH').style.display='none';
+    document.getElementById('tabChecador').classList.add('active');
+    document.getElementById('tabRH').classList.remove('active');
+  } else {
+    document.getElementById('sectionChecador').style.display='none';
+    document.getElementById('sectionRH').style.display='block';
+    document.getElementById('tabChecador').classList.remove('active');
+    document.getElementById('tabRH').classList.add('active');
+  }
+}
+
+/* Export today's records as JSON */
+function exportTodayJSON(){
+  if(!records.length){ alert('No hay registros hoy'); return; }
+  const data = JSON.stringify({date: todayKey(), records}, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `staff_records_${todayKey()}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+/* Automatic daily archival: revisa cada minuto si la fecha cambió y archiva registros previos */
+let lastCheckedDate = todayKey();
+setInterval(()=>{
+  const nowKey = todayKey();
+  if(nowKey !== lastCheckedDate){
+    // archivar registros que correspondan a lastCheckedDate
+    if(records.length){
+      const toArchive = records.slice().filter(r=> new Date(r.ts).toISOString().slice(0,10) === lastCheckedDate);
+      if(toArchive.length){
+        archives.push({date:lastCheckedDate, records: toArchive});
+        saveArchives();
+        // eliminar esos registros de records
+        records = records.filter(r=> new Date(r.ts).toISOString().slice(0,10) !== lastCheckedDate);
+        saveRecords();
+        alert('Se archivaron los registros del día '+ lastCheckedDate);
+      }
+    }
+    lastCheckedDate = nowKey;
+  }
+}, 60*1000); // cada minuto
+
+/* Inicialización */
+function init(){
+  // reloj
+  setInterval(()=>{
+    const now = new Date();
+    document.getElementById('clock').textContent = formatTime(now);
+    document.getElementById('date').textContent = now.toLocaleDateString('es-ES', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  }, 1000);
+  loadAll();
+  initCamera();
+}
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
